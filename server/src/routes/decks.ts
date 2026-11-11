@@ -9,7 +9,6 @@ import User from '../models/User';
 
 const router = Router();
 
-// Create a deck, optionally adding it to a class.
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const { deckName, description, userId, classId } = req.body;
@@ -46,7 +45,6 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         return;
       }
 
-      // Owners, instructors, and regular members can create decks.
       const isMember =
         classroom.owner.toString() === userId ||
         classroom.members.some(
@@ -83,7 +81,6 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Create a standalone deck.
     const deck = await Deck.create({
       deckName: deckName.trim(),
       description: description?.trim() || '',
@@ -117,6 +114,57 @@ router.get('/user/:userId', async (req: Request, res: Response): Promise<void> =
   } catch (error) {
     console.error('Error retrieving decks:', error);
     res.status(500).json({ error: 'Unable to retrieve decks' });
+  }
+});
+
+// Add a flashcard to a deck.
+router.post('/:deckId/cards', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { deckId } = req.params;
+    const { front, back } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(deckId)) {
+      res.status(400).json({ error: 'Invalid deck ID' });
+      return;
+    }
+
+    if (!front?.trim() || !back?.trim()) {
+      res.status(400).json({
+        error: 'Both the front and back of the card are required'
+      });
+      return;
+    }
+
+    const deck = await Deck.findById(deckId);
+
+    if (!deck) {
+      res.status(404).json({ error: 'Deck not found' });
+      return;
+    }
+
+    const cardCount = await Card.countDocuments({ deckId });
+
+    const card = await Card.create({
+      front: front.trim(),
+      back: back.trim(),
+      deckId,
+      index: cardCount
+    });
+
+    const updatedDeck = await Deck.findByIdAndUpdate(
+      deckId,
+      { $inc: { numCards: 1 } },
+      { new: true }
+    );
+
+    res.status(201).json({
+      message: 'Flashcard created successfully',
+      card,
+      deck: updatedDeck
+    });
+  } catch (error) {
+    console.error('Error creating flashcard:', error);
+    res.status(500).json({ error: 'Unable to create flashcard' });
   }
 });
 
