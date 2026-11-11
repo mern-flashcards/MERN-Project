@@ -31,7 +31,6 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Create the class.
     const classroom = await Class.create({
       name: name.trim(),
       description: description || '',
@@ -41,19 +40,9 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       decks: []
     });
 
-    // Add the class ID to the owner's classes array.
-    await User.findByIdAndUpdate(
-      ownerId,
-      {
-        $addToSet: { classes: classroom._id }
-      },
-      { new: true }
-    );
-
-    // Verify that the class was added.
-    const updatedUser = await User.findById(ownerId);
-
-    console.log('User classes after creation:', updatedUser?.classes);
+    await User.findByIdAndUpdate(ownerId, {
+      $addToSet: { classes: classroom._id }
+    });
 
     res.status(201).json({
       message: 'Class created successfully',
@@ -148,7 +137,7 @@ router.get('/user/:userId', async (req: Request, res: Response): Promise<void> =
   }
 });
 
-// Get one class
+// Get one class, including its members
 router.get('/:classId', async (req: Request, res: Response): Promise<void> => {
   try {
     const { classId } = req.params;
@@ -158,7 +147,9 @@ router.get('/:classId', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const classroom = await Class.findById(classId).populate('decks');
+    const classroom = await Class.findById(classId)
+      .populate('decks')
+      .populate('members', 'firstName lastName login email');
 
     if (!classroom) {
       res.status(404).json({ error: 'Class not found' });
@@ -171,5 +162,166 @@ router.get('/:classId', async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ error: 'Unable to retrieve class' });
   }
 });
+
+// Update class name, description, or class code
+router.patch('/:classId', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { classId } = req.params;
+    const { name, description, classCode, ownerId } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(classId)) {
+      res.status(400).json({ error: 'Invalid class ID' });
+      return;
+    }
+
+    const classroom = await Class.findById(classId);
+
+    if (!classroom) {
+      res.status(404).json({ error: 'Class not found' });
+      return;
+    }
+
+    if (!ownerId || String(classroom.owner) !== String(ownerId)) {
+      res.status(403).json({ error: 'Only the class owner can edit this class' });
+      return;
+    }
+
+    const updates: {
+      name?: string;
+      description?: string;
+      classCode?: string;
+    } = {};
+
+    if (name !== undefined) {
+      if (typeof name !== 'string' || !name.trim()) {
+        res.status(400).json({ error: 'Class name cannot be empty' });
+        return;
+      }
+
+      updates.name = name.trim();
+    }
+
+    if (description !== undefined) {
+      if (typeof description !== 'string') {
+        res.status(400).json({ error: 'Invalid description' });
+        return;
+      }
+
+      updates.description = description.trim();
+    }
+
+    if (classCode !== undefined) {
+      if (typeof classCode !== 'string' || !classCode.trim()) {
+        res.status(400).json({ error: 'Class code cannot be empty' });
+        return;
+      }
+
+      const normalizedCode = classCode.trim().toUpperCase();
+
+      const existingClass = await Class.findOne({
+        classCode: normalizedCode,
+        _id: { $ne: classId }
+      });
+
+      if (existingClass) {
+        res.status(409).json({ error: 'That class code is already in use' });
+        return;
+      }
+
+      updates.classCode = normalizedCode;
+    }
+
+    const updatedClass = await Class.findByIdAndUpdate(
+      classId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    )
+      .populate('decks')
+      .populate('members', 'firstName lastName login email');
+
+    res.status(200).json({
+      message: 'Class updated successfully',
+      class: updatedClass
+    });
+  } catch (error) {
+    console.error('Error updating class:', error);
+
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 11000
+    ) {
+      res.status(409).json({ error: 'That class code is already in use' });
+      return;
+    }
+
+    res.status(500).json({ error: 'Unable to update class' });
+  }
+});
+
+// Remove a member from a class
+router.delete(
+  '/:classId/members/:memberId',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { classId, memberId } = req.params;
+      const { ownerId } = req.body;
+
+      if (
+        !mongoose.Types.ObjectId.isValid(classId) ||
+        !mongoose.Types.ObjectId.isValid(memberId) ||
+        !mongoose.Types.ObjectId.isValid(ownerId)
+      ) {
+        res.status(400).json({ error: 'Invalid ID' });
+        return;
+      }
+
+      const classroom = await Class.findById(classId);
+
+      if (!classroom) {
+        res.status(404).json({ error: 'Class not found' });
+        return;
+      }
+
+      if (String(classroom.owner) !== String(ownerId)) {
+        res.status(403).json({ error: 'Only the class owner can remove members' });
+        return;
+      }
+
+      if (String(classroom.owner) === String(memberId)) {
+        res.status(400).json({ error: 'The class owner cannot be removed' });
+        return;
+      }
+
+      if (!classroom.members.some(
+        (member) => String(member) === String(memberId)
+      )) {
+        res.status(404).json({ error: 'Member not found in this class' });
+        return;
+      }
+
+      await Class.findByIdAndUpdate(classId, {
+        $pull: { members: memberId }
+      });
+
+      await User.findByIdAndUpdate(memberId, {
+        $pull: { classes: classId }
+      });
+
+      const updatedClass = await Class.findById(classId)
+        .populate('decks')
+        .populate('members', 'firstName lastName login email');
+
+      res.status(200).json({
+        message: 'Member removed successfully',
+        class: updatedClass
+      });
+    } catch (error) {
+      console.error('Error removing class member:', error);
+      res.status(500).json({ error: 'Unable to remove member' });
+    }
+  }
+);
 
 export default router;

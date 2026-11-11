@@ -36,7 +36,6 @@ router.post('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             res.status(404).json({ error: 'Owner not found' });
             return;
         }
-        // Create the class.
         const classroom = yield Class_1.default.create({
             name: name.trim(),
             description: description || '',
@@ -45,13 +44,9 @@ router.post('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             instructors: [],
             decks: []
         });
-        // Add the class ID to the owner's classes array.
         yield User_1.default.findByIdAndUpdate(ownerId, {
             $addToSet: { classes: classroom._id }
-        }, { new: true });
-        // Verify that the class was added.
-        const updatedUser = yield User_1.default.findById(ownerId);
-        console.log('User classes after creation:', updatedUser === null || updatedUser === void 0 ? void 0 : updatedUser.classes);
+        });
         res.status(201).json({
             message: 'Class created successfully',
             class: classroom
@@ -131,7 +126,7 @@ router.get('/user/:userId', (req, res) => __awaiter(void 0, void 0, void 0, func
         res.status(500).json({ error: 'Unable to retrieve classes' });
     }
 }));
-// Get one class
+// Get one class, including its members
 router.get('/:classId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { classId } = req.params;
@@ -139,7 +134,9 @@ router.get('/:classId', (req, res) => __awaiter(void 0, void 0, void 0, function
             res.status(400).json({ error: 'Invalid class ID' });
             return;
         }
-        const classroom = yield Class_1.default.findById(classId).populate('decks');
+        const classroom = yield Class_1.default.findById(classId)
+            .populate('decks')
+            .populate('members', 'firstName lastName login email');
         if (!classroom) {
             res.status(404).json({ error: 'Class not found' });
             return;
@@ -149,6 +146,122 @@ router.get('/:classId', (req, res) => __awaiter(void 0, void 0, void 0, function
     catch (error) {
         console.error('Error retrieving class:', error);
         res.status(500).json({ error: 'Unable to retrieve class' });
+    }
+}));
+// Update class name, description, or class code
+router.patch('/:classId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { classId } = req.params;
+        const { name, description, classCode, ownerId } = req.body;
+        if (!mongoose_1.default.Types.ObjectId.isValid(classId)) {
+            res.status(400).json({ error: 'Invalid class ID' });
+            return;
+        }
+        const classroom = yield Class_1.default.findById(classId);
+        if (!classroom) {
+            res.status(404).json({ error: 'Class not found' });
+            return;
+        }
+        if (!ownerId || String(classroom.owner) !== String(ownerId)) {
+            res.status(403).json({ error: 'Only the class owner can edit this class' });
+            return;
+        }
+        const updates = {};
+        if (name !== undefined) {
+            if (typeof name !== 'string' || !name.trim()) {
+                res.status(400).json({ error: 'Class name cannot be empty' });
+                return;
+            }
+            updates.name = name.trim();
+        }
+        if (description !== undefined) {
+            if (typeof description !== 'string') {
+                res.status(400).json({ error: 'Invalid description' });
+                return;
+            }
+            updates.description = description.trim();
+        }
+        if (classCode !== undefined) {
+            if (typeof classCode !== 'string' || !classCode.trim()) {
+                res.status(400).json({ error: 'Class code cannot be empty' });
+                return;
+            }
+            const normalizedCode = classCode.trim().toUpperCase();
+            const existingClass = yield Class_1.default.findOne({
+                classCode: normalizedCode,
+                _id: { $ne: classId }
+            });
+            if (existingClass) {
+                res.status(409).json({ error: 'That class code is already in use' });
+                return;
+            }
+            updates.classCode = normalizedCode;
+        }
+        const updatedClass = yield Class_1.default.findByIdAndUpdate(classId, { $set: updates }, { new: true, runValidators: true })
+            .populate('decks')
+            .populate('members', 'firstName lastName login email');
+        res.status(200).json({
+            message: 'Class updated successfully',
+            class: updatedClass
+        });
+    }
+    catch (error) {
+        console.error('Error updating class:', error);
+        if (typeof error === 'object' &&
+            error !== null &&
+            'code' in error &&
+            error.code === 11000) {
+            res.status(409).json({ error: 'That class code is already in use' });
+            return;
+        }
+        res.status(500).json({ error: 'Unable to update class' });
+    }
+}));
+// Remove a member from a class
+router.delete('/:classId/members/:memberId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { classId, memberId } = req.params;
+        const { ownerId } = req.body;
+        if (!mongoose_1.default.Types.ObjectId.isValid(classId) ||
+            !mongoose_1.default.Types.ObjectId.isValid(memberId) ||
+            !mongoose_1.default.Types.ObjectId.isValid(ownerId)) {
+            res.status(400).json({ error: 'Invalid ID' });
+            return;
+        }
+        const classroom = yield Class_1.default.findById(classId);
+        if (!classroom) {
+            res.status(404).json({ error: 'Class not found' });
+            return;
+        }
+        if (String(classroom.owner) !== String(ownerId)) {
+            res.status(403).json({ error: 'Only the class owner can remove members' });
+            return;
+        }
+        if (String(classroom.owner) === String(memberId)) {
+            res.status(400).json({ error: 'The class owner cannot be removed' });
+            return;
+        }
+        if (!classroom.members.some((member) => String(member) === String(memberId))) {
+            res.status(404).json({ error: 'Member not found in this class' });
+            return;
+        }
+        yield Class_1.default.findByIdAndUpdate(classId, {
+            $pull: { members: memberId }
+        });
+        yield User_1.default.findByIdAndUpdate(memberId, {
+            $pull: { classes: classId }
+        });
+        const updatedClass = yield Class_1.default.findById(classId)
+            .populate('decks')
+            .populate('members', 'firstName lastName login email');
+        res.status(200).json({
+            message: 'Member removed successfully',
+            class: updatedClass
+        });
+    }
+    catch (error) {
+        console.error('Error removing class member:', error);
+        res.status(500).json({ error: 'Unable to remove member' });
     }
 }));
 exports.default = router;
