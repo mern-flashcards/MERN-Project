@@ -1,0 +1,368 @@
+
+.deck-page {
+  min-height: 100vh;
+  padding: 30px 5%;
+  box-sizing: border-box;
+  background: #f7f7fb;
+}
+
+.deck-page-header {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 35px;
+}
+
+.deck-page-header h1 {
+  margin: 0 0 5px;
+  color: #29293c;
+  font-size: 25px;
+}
+
+.deck-page-header p {
+  margin: 0;
+  color: #77758a;
+  font-size: 14px;
+}
+
+.deck-page-header > span {
+  margin-left: auto;
+  color: #5b4bdb;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.deck-back-button {
+  padding: 10px 14px;
+  border: 1px solid #dedee8;
+  border-radius: 8px;
+  background: white;
+  color: #5b4bdb;
+  cursor: pointer;
+}
+
+.deck-page-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
+  gap: 30px;
+  align-items: start;
+}
+
+.deck-study-area {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.deck-card-counter {
+  margin: 0 0 15px;
+  color: #77758a;
+  font-size: 13px;
+}
+
+.study-flashcard {
+  width: 100%;
+  aspect-ratio: 5 / 3;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  border: 1px solid #e5e5ed;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 4px 15px rgba(30, 25, 70, 0.05);
+  cursor: pointer;
+}
+
+.study-flashcard:hover {
+  border-color: #b9b2f5;
+}
+
+.study-flashcard-label {
+  color: #77758a;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.study-flashcard-text {
+  max-width: 100%;
+  max-height: 75%;
+  overflow-y: auto;
+  color: #29293c;
+  font-size: 22px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.study-flashcard-hint {
+  color: #9996aa;
+  font-size: 12px;
+}
+
+.deck-card-controls {
+  display: flex;
+  gap: 15px;
+  margin-top: 22px;
+}
+
+.deck-card-controls button {
+  padding: 10px 22px;
+  border: 1px solid #dedee8;
+  border-radius: 8px;
+  background: white;
+  color: #5b4bdb;
+  cursor: pointer;
+}
+
+.deck-card-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.deck-empty-study {
+  width: 100%;
+  aspect-ratio: 5 / 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 25px;
+  box-sizing: border-box;
+  border: 1px dashed #d6d3e5;
+  border-radius: 14px;
+  background: white;
+  text-align: center;
+}
+
+.deck-empty-study h2 {
+  margin: 0 0 8px;
+  color: #29293c;
+  font-size: 20px;
+}
+
+.deck-empty-study p {
+  margin: 0;
+  color: #77758a;
+  font-size: 13px;
+}
+
+.deck-card-sidebar {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 750px;
+  padding: 18px;
+  border: 1px solid #e5e5ed;
+  border-radius: 12px;
+  background: white;
+}
+
+.deck-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.deck-sidebar-header h2 {
+  margin: 0 0 4px;
+  color: #29293c;
+  font-size: 18px;
+}
+
+.deck-sidebar-header p {
+  margin: 0;
+  color: #77758a;
+  font-size: 12px;
+}
+
+.add-card-button {
+  flex-shrink: 0;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 7px;
+  background: #5b4bdb;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-card-button:hover {
+  background: #4636c4;
+}
+
+.add-card-form {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 15px;
+  padding: 13px;
+  border: 1px solid #e5e5ed;
+  border-radius: 9px;
+  background: #faf9ff;
+}
+
+.add-card-form h3 {
+  margin: 0 0 3px;
+  color: #29293c;
+  font-size: 14px;
+}
+
+.add-card-form label {
+  color: #55536a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.add-card-form textarea {
+  width: 100%;
+  min-height: 65px;
+  padding: 10px;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid #dedee8;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.add-card-form textarea:focus {
+  outline: none;
+  border-color: #5b4bdb;
+}
+
+.add-card-form button {
+  padding: 10px;
+  border: none;
+  border-radius: 7px;
+  background: #5b4bdb;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-card-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.add-card-error {
+  margin: 0;
+  color: #c0392b;
+  font-size: 12px;
+}
+
+.deck-card-search {
+  width: 100%;
+  padding: 11px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+  border: 1px solid #dedee8;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.deck-card-search:focus {
+  outline: none;
+  border-color: #5b4bdb;
+}
+
+.deck-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  min-height: 100px;
+  padding-right: 3px;
+}
+
+.deck-sidebar-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 13px;
+  border: 1px solid #e5e5ed;
+  border-radius: 8px;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+}
+
+.deck-sidebar-card:hover {
+  border-color: #b9b2f5;
+}
+
+.deck-sidebar-card.selected {
+  border-color: #5b4bdb;
+  background: #f0efff;
+}
+
+.deck-sidebar-card span {
+  color: #5b4bdb;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.deck-sidebar-card strong {
+  color: #29293c;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.deck-sidebar-card small {
+  color: #77758a;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.deck-sidebar-empty {
+  padding: 15px 5px;
+  color: #77758a;
+  font-size: 13px;
+  text-align: center;
+}
+
+.deck-page-message {
+  padding: 50px;
+  color: #77758a;
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .deck-page-content {
+    grid-template-columns: 1fr;
+  }
+
+  .deck-card-sidebar {
+    max-height: 500px;
+  }
+}
+
+@media (max-width: 550px) {
+  .deck-page {
+    padding: 20px 15px;
+  }
+
+  .deck-page-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .deck-page-header > span {
+    margin-left: 0;
+  }
+
+  .study-flashcard-text {
+    font-size: 16px;
+  }
+}

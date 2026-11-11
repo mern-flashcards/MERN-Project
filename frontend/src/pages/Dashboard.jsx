@@ -280,7 +280,7 @@ function Dashboard() {
   }
 
   function handleSelectDeck(deck) {
-    console.log("Selected deck:", deck);
+    window.location.href = `/deck/${deck._id}`;
   }
 
   if (!user) {
