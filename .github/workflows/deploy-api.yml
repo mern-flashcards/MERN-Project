@@ -1,4 +1,5 @@
 
+
 name: Deploy Backend
 
 on:
@@ -32,10 +33,9 @@ jobs:
       - name: Build and restart backend
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
-            export PATH="/home/deploy/.nvm/versions/node/v26.13.0/bin:$PATH"
             cd /opt/mern-api/server &&
-            npm ci &&
-            npm run build &&
+            /home/deploy/.nvm/versions/node/v26.13.0/bin/npm ci &&
+            /home/deploy/.nvm/versions/node/v26.13.0/bin/npm run build &&
             export XDG_RUNTIME_DIR=/run/user/$(id -u) &&
             systemctl --user restart cards-api &&
             systemctl --user is-active cards-api
