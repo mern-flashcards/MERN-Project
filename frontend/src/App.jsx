@@ -6,7 +6,7 @@ import DeckViewer from "./pages/DeckViewer";
 
 function App() {
   const path = window.location.pathname;
-  const loggedIn = Boolean(localStorage.getItem("user"));
+  const loggedIn = Boolean(sessionStorage.getItem("user"));
 
   if (path === "/dashboard" && loggedIn) {
     return <Dashboard />;

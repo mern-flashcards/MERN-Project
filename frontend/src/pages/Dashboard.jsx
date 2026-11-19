@@ -12,7 +12,7 @@ const API_BASE = "";
 
 function getStoredUser() {
   try {
-    return JSON.parse(localStorage.getItem("user") || "null");
+    return JSON.parse(sessionStorage.getItem("user") || "null");
   } catch {
     return null;
   }
@@ -274,8 +274,8 @@ function Dashboard() {
   }
 
   function handleLogout() {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
     window.location.href = "/";
   }
 

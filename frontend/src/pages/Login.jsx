@@ -75,7 +75,7 @@ function Login() {
 
       // Saves the returned user data in the browser's local storage.
       // JSON.stringify converts the JavaScript object into a string.
-      localStorage.setItem('user', JSON.stringify(data));
+      sessionStorage.setItem('user', JSON.stringify(data));
 
       // TODO: Redirect to the decks page once it exists.
       window.location.href = "/dashboard";
